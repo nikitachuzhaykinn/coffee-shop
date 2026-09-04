@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Coffee Shop{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-stone-50 text-stone-900 font-sans flex flex-col min-h-screen">
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="{% url 'catalog:product_list' %}" class="text-xl font-bold text-stone-900 flex items-center gap-2">
+                ☕ Coffee Shop
+            </a>
+
+            <nav class="hidden md:flex gap-6">
+                <a href="{% url 'catalog:product_list' %}"
+                    class="text-stone-600 hover:text-amber-800 transition-colors">Каталог</a>
+                <a href="#" class="text-stone-600 hover:text-amber-800 transition-colors">О нас</a>
+                <a href="#" class="text-stone-600 hover:text-amber-800 transition-colors">Доставка</a>
+            </nav>
+
+            <div class="flex items-center gap-4">
+                <button class="text-stone-600 hover:text-amber-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+                <a href="#" class="relative text-stone-600 hover:text-amber-800">
+                    <span class="text-2xl">🛒</span>
+                    <span
+                        class="absolute -top-1 -right-1 bg-amber-800 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+                <a href="#"
+                    class="bg-amber-800 text-white px-4 py-2 rounded-full hover:bg-amber-900 transition-colors text-sm font-medium">
+                    Войти
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-stone-900 text-stone-300 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2026 Coffee Shop. Все права защищены.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

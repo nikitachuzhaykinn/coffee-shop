@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог товаров - Coffee Shop{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <!-- Сайдбар -->
+    <aside class="w-full lg:w-1/4 lg:sticky lg:top-24 h-fit space-y-6">
+        <form method="get" class="space-y-4">
+            <div class="relative">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Поиск кофе..."
+                    class="w-full border border-stone-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:border-transparent bg-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-400 absolute left-3 top-2.5"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-stone-900 mb-2">Категории</h3>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{% url 'catalog:product_list' %}"
+                            class="block px-3 py-2 rounded-lg transition-colors {% if not current_category %}bg-amber-100 text-amber-800 font-medium{% else %}text-stone-600 hover:bg-stone-100{% endif %}">
+                            Все товары
+                        </a>
+                    </li>
+                    {% for cat in categories %}
+                    <li>
+                        <a href="{% url 'catalog:category_detail' cat.slug %}"
+                            class="block px-3 py-2 rounded-lg transition-colors {% if current_category.slug == cat.slug %}bg-amber-100 text-amber-800 font-medium{% else %}text-stone-600 hover:bg-stone-100{% endif %}">
+                            {{ cat.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-stone-900 mb-2">Сортировка</h3>
+                <select name="sort" onchange="this.form.submit()"
+                    class="w-full border border-stone-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-800 bg-white text-stone-700">
+                    <option value="date_desc" {% if current_sort == 'date_desc' %}selected{% endif %}>По дате (новые)
+                    </option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>По цене ↑</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>По цене ↓</option>
+                    <option value="name" {% if current_sort == 'name' %}selected{% endif %}>По названию</option>
+                </select>
+            </div>
+        </form>
+    </aside>
+
+    <!-- Сетка товаров -->
+    <div class="w-full lg:w-3/4">
+        {% if current_category %}
+        <h1 class="text-3xl font-bold text-stone-900 mb-2">{{ current_category.name }}</h1>
+        {% if current_category.description %}
+        <p class="text-stone-500 mb-8">{{ current_category.description }}</p>
+        {% endif %}
+        {% endif %}
+
+        {% if products %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for product in products %}
+            <a href="{% url 'catalog:product_detail' product.slug %}"
+                class="group bg-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col">
+                <div class="aspect-square w-full bg-stone-200 relative overflow-hidden">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-stone-400 text-4xl">☕</div>
+                    {% endif %}
+                </div>
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="text-lg font-semibold text-stone-900 group-hover:text-amber-800 transition-colors">
+                        {{ product.name }}
+                    </h3>
+                    <p class="text-xl font-mono font-bold text-amber-800 mt-1">{{ product.price }} ₽</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        {% if is_paginated %}
+        <div class="flex justify-center items-center gap-2 mt-12">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}"
+                class="border border-stone-300 rounded-lg px-4 py-2 hover:bg-stone-100 text-stone-700 transition-colors">
+                Назад
+            </a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-amber-800 text-white rounded-lg font-medium">
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}"
+                class="border border-stone-300 rounded-lg px-4 py-2 hover:bg-stone-100 text-stone-700 transition-colors">
+                Вперёд
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-stone-500 text-center py-12 text-lg">
+            Товары не найдены
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
