@@ -4,58 +4,8 @@
 {% block title %}{{ product.name }} - Coffee Shop{% endblock %}
 
 {% block content %}
-<div x-data="{
-    basePrice: {{ product.price|unlocalize }},
-    
-    allOptions: {
-        {% for modifier in product.modifiers.all %}
-            'mod_{{ modifier.id }}': {
-                {% for option in modifier.options.all %}
-                    '{{ option.id }}': parseFloat('{{ option.price_extra|unlocalize|default:0 }}'.replace(',', '.')){% if not forloop.last %},{% endif %}
-                {% endfor %}
-            }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    },
-
-    modPrices: {
-        {% for modifier in product.modifiers.all %}
-            'mod_{{ modifier.id }}': 0{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    },
-
-    init() {
-        this.updateAllPrices();
-    },
-
-    updateAllPrices() {
-        this.modPrices = {};
-        document.querySelectorAll('input[data-mod-name]:checked').forEach(el => {
-            const name = el.dataset.modName;
-            const price = parseFloat(el.dataset.price.replace(',', '.')) || 0;
-            this.modPrices[name] = price;
-        });
-        // Если по какой-то причине модификатор не выбран, ставим 0
-        for (let key in this.allOptions) {
-            if (!(key in this.modPrices)) {
-                this.modPrices[key] = 0;
-            }
-        }
-    },
-
-    get total() {
-        let sum = this.basePrice;
-        for (let key in this.modPrices) {
-            sum += this.modPrices[key];
-        }
-        return sum.toFixed(2);
-    },
-
-    updatePrice(modId, optionId) {
-        const modKey = 'mod_' + modId;
-        this.modPrices[modKey] = this.allOptions[modKey][optionId];
-        console.log(`✅ Выбрано: ${modKey}, опция ${optionId}. Новая цена модификатора:`, this.modPrices[modKey], `| Новое Итого:`, this.total);
-    }
-}" class="flex flex-col md:flex-row gap-8 bg-white rounded-2xl shadow-sm p-6 md:p-8">
+<div x-data="productData({{ product.price|unlocalize }}, '{% url 'cart:cart_add' product.id %}')"
+    class="flex flex-col md:flex-row gap-8 bg-white rounded-2xl shadow-sm p-6 md:p-8">
 
     <!-- Фото -->
     <div class="w-full md:w-1/2">
@@ -108,18 +58,132 @@
         </div>
         {% endif %}
 
-        <!-- Итого и Кнопка -->
-        <div class="border-t border-stone-200 mt-auto pt-6">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-lg font-semibold text-stone-900">Итого:</span>
-                <span class="text-3xl font-mono font-bold text-amber-800" x-text="total + ' ₽'"></span>
+        <!-- Итого, Количество и Кнопка -->
+        <div class="border-t border-stone-200 mt-auto pt-6 space-y-4">
+            <!-- Счетчик количества -->
+            <div class="flex items-center gap-4">
+                <span class="text-stone-600 font-medium">Количество:</span>
+                <div class="flex items-center border border-stone-300 rounded-lg">
+                    <button type="button" @click="decrement()"
+                        class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-l-lg">-</button>
+                    <span class="w-12 text-center border-x border-stone-300 py-2 bg-white text-stone-900"
+                        x-text="quantity" x-cloak>1</span>
+                    <button type="button" @click="increment()"
+                        class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-r-lg">+</button>
+                </div>
             </div>
 
-            <button
+            <!-- Итого -->
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-stone-900">Итого:</span>
+                <span class="text-3xl font-mono font-bold text-amber-800" x-text="getTotal()" x-cloak>{{ product.price
+                    }} ₽</span>
+            </div>
+
+            <!-- Кнопка добавления -->
+            <button @click="addToCart()"
                 class="w-full bg-amber-800 text-white py-3 rounded-full text-lg font-semibold hover:bg-amber-900 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
                 <span>🛒</span> Добавить в корзину
             </button>
         </div>
     </div>
 </div>
+
+<!-- Скрытый инпут для CSRF -->
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+<script>
+    function productData(basePrice, cartUrl) {
+        return {
+            basePrice: basePrice,
+            quantity: 1,
+            cartUrl: cartUrl,
+            allOptions: {},
+            modPrices: {},
+
+            init() {
+                document.querySelectorAll('input[data-mod-name]').forEach(input => {
+                    const modName = input.dataset.modName;
+                    const optionId = input.value;
+                    const price = parseFloat(input.dataset.price) || 0;
+                    if (!this.allOptions[modName]) {
+                        this.allOptions[modName] = {};
+                        this.modPrices[modName] = 0;
+                    }
+                    this.allOptions[modName][optionId] = price;
+                });
+                this.updateAllPrices();
+            },
+
+            updateAllPrices() {
+                this.modPrices = {};
+                document.querySelectorAll('input[data-mod-name]:checked').forEach(el => {
+                    const name = el.dataset.modName;
+                    const price = parseFloat(el.dataset.price) || 0;
+                    this.modPrices[name] = price;
+                });
+                for (let key in this.allOptions) {
+                    if (!(key in this.modPrices)) {
+                        this.modPrices[key] = 0;
+                    }
+                }
+            },
+
+            getTotal() {
+                let sum = this.basePrice;
+                for (let key in this.modPrices) {
+                    sum += this.modPrices[key];
+                }
+                return (sum * this.quantity).toFixed(2) + ' ₽';
+            },
+
+            updatePrice(modId, optionId) {
+                const modKey = 'mod_' + modId;
+                this.modPrices[modKey] = this.allOptions[modKey][optionId];
+            },
+
+            increment() { this.quantity++; },
+
+            decrement() {
+                if (this.quantity > 1) { this.quantity--; }
+            },
+
+            addToCart() {
+                const selectedModifiers = [];
+                document.querySelectorAll('input[type="radio"][name^="modifier_"]:checked').forEach(input => {
+                    selectedModifiers.push(input.value);
+                });
+
+                const csrfToken = document.getElementById('csrf-token').value;
+                const formData = new FormData();
+                formData.append('quantity', this.quantity);
+                selectedModifiers.forEach(mod => formData.append('modifier_options', mod));
+
+                fetch(this.cartUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Ошибка сети: ' + response.status);
+                        return response.text();
+                    })
+                    .then(html => {
+                        const cartCountEl = document.getElementById('cart-count');
+                        if (cartCountEl) {
+                            cartCountEl.outerHTML = html;
+                        }
+                        // ИСПРАВЛЕНИЕ: Вызываем глобальную функцию напрямую
+                        if (typeof showCartNotification === 'function') {
+                            showCartNotification();
+                        }
+                    })
+                    .catch(error => console.error('Ошибка добавления в корзину:', error));
+            }
+        }
+    }
+</script>
 {% endblock %}
