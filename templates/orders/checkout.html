@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Оформление заказа{% endblock %}
+
+{% block content %}
+<div class="bg-stone-50 min-h-screen py-10 px-4">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-stone-900 mb-8">Оформление заказа</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Левая колонка: Форма -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <form method="post" x-data="{ delivery: '{{ form.delivery_type.value|default:" pickup" }}' }"
+                        novalidate>
+                        {% csrf_token %}
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Имя -->
+                            <div>
+                                <label for="{{ form.first_name.id_for_label }}"
+                                    class="block text-sm font-medium text-stone-900 mb-1">Имя</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Фамилия -->
+                            <div>
+                                <label for="{{ form.last_name.id_for_label }}"
+                                    class="block text-sm font-medium text-stone-900 mb-1">Фамилия</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div>
+                                <label for="{{ form.email.id_for_label }}"
+                                    class="block text-sm font-medium text-stone-900 mb-1">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Телефон -->
+                            <div>
+                                <label for="{{ form.phone.id_for_label }}"
+                                    class="block text-sm font-medium text-stone-900 mb-1">Телефон</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Тип получения -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-stone-900 mb-2">Тип получения</label>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="delivery_type" value="pickup" x-model="delivery"
+                                        class="w-4 h-4 text-amber-800 border-stone-300 focus:ring-amber-800">
+                                    <span class="text-stone-900">Самовывоз</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="delivery_type" value="delivery" x-model="delivery"
+                                        class="w-4 h-4 text-amber-800 border-stone-300 focus:ring-amber-800">
+                                    <span class="text-stone-900">Доставка</span>
+                                </label>
+                            </div>
+                            {% if form.delivery_type.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.delivery_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Время самовывоза -->
+                        <div class="mt-5" x-show="delivery === 'pickup'" x-cloak>
+                            <label for="{{ form.pickup_time.id_for_label }}"
+                                class="block text-sm font-medium text-stone-900 mb-1">Время самовывоза</label>
+                            {{ form.pickup_time }}
+                            {% if form.pickup_time.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.pickup_time.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Адрес доставки -->
+                        <div class="mt-5" x-show="delivery === 'delivery'" x-cloak>
+                            <label for="{{ form.address.id_for_label }}"
+                                class="block text-sm font-medium text-stone-900 mb-1">Адрес доставки</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.address.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Некритичные ошибки формы -->
+                        {% if form.non_field_errors %}
+                        <div class="mt-4 text-red-600 text-sm">
+                            {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Правая колонка: Итог -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24 h-fit">
+                    <h2 class="text-lg font-bold text-stone-900 mb-4">Ваш заказ</h2>
+
+                    <ul class="space-y-3">
+                        {% for item in cart %}
+                        <li class="flex justify-between items-start">
+                            <div>
+                                <p class="text-stone-900 font-medium">{{ item.product.name }}</p>
+                                <p class="text-stone-500 text-sm">× {{ item.quantity }}</p>
+                            </div>
+                            <span class="font-mono font-bold text-amber-800">{{ item.total_price }}&nbsp;₽</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="border-t border-stone-200 my-4"></div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-stone-900 font-semibold">Итого</span>
+                        <span class="font-mono font-bold text-amber-800 text-2xl">{{ cart.get_total_price }}&nbsp;₽</span>
+                    </div>
+
+                    <button type="submit" form="checkout-form"
+                        class="w-full bg-amber-800 text-white py-3 rounded-full font-semibold hover:bg-amber-900 mt-4 transition-colors"
+                        onclick="this.closest('.lg\\:col-span-1').previousElementSibling.querySelector('form').requestSubmit()">
+                        Оформить заказ
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

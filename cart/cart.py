@@ -41,6 +41,10 @@ class Cart:
 
     def save(self):
         self.session.modified = True
+        
+    def clear(self):
+        del self.session[settings.CART_SESSION_ID]
+        self.save()
 
     def get_total_price(self):
         total = Decimal('0')

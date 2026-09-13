@@ -4,89 +4,116 @@
 {% block title %}{{ product.name }} - Coffee Shop{% endblock %}
 
 {% block content %}
-<div x-data="productData({{ product.price|unlocalize }}, '{% url 'cart:cart_add' product.id %}')"
-    class="flex flex-col md:flex-row gap-8 bg-white rounded-2xl shadow-sm p-6 md:p-8">
+<!-- Кнопка "Назад" для мобильных устройств -->
+<button onclick="window.location.href = document.referrer || '{% url 'catalog:product_list' %}';"
+    class="mb-4 md:hidden flex items-center gap-2 text-stone-600 hover:text-amber-800 transition-colors group">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:-translate-x-1" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    <span class="font-medium">Назад</span>
+</button>
 
-    <!-- Фото -->
-    <div class="w-full md:w-1/2">
-        <div class="aspect-square w-full bg-stone-200 rounded-lg shadow-sm overflow-hidden">
-            {% if product.image %}
-            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-            {% else %}
-            <div class="w-full h-full flex items-center justify-center text-stone-400 text-6xl">☕</div>
+<!-- Контейнер с отступом 7rem на десктопе для кнопки "Назад" -->
+<div class="relative md:pl-[7rem]">
+    <!-- Кнопка "Назад" для десктопа -->
+    <button onclick="window.location.href = document.referrer || '{% url 'catalog:product_list' %}';"
+        class="absolute left-0 top-6 hidden md:flex items-center gap-2 text-stone-600 hover:text-amber-800 transition-colors group">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:-translate-x-1"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span class="font-medium">Назад</span>
+    </button>
+
+    <!-- Ваш оригинальный код карточки (без изменений) -->
+    <div x-data="productData({{ product.price|unlocalize }}, '{% url 'cart:cart_add' product.id %}')"
+        class="flex flex-col md:flex-row gap-8 bg-white rounded-2xl shadow-sm p-6 md:p-8">
+
+        <!-- Фото -->
+        <div class="w-full md:w-1/2">
+            <div class="aspect-square w-full bg-stone-200 rounded-lg shadow-sm overflow-hidden">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-stone-400 text-6xl">☕</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Инфо -->
+        <div class="w-full md:w-1/2 flex flex-col">
+            <h1 class="text-3xl font-bold text-stone-900">{{ product.name }}</h1>
+
+            <div class="text-stone-600 mt-4 leading-relaxed">
+                {{ product.description|linebreaks }}
+            </div>
+
+            <div class="border-t border-stone-200 my-6"></div>
+
+            <!-- Модификаторы -->
+            {% if product.modifiers.all %}
+            <div class="space-y-6 mb-6">
+                {% for modifier in product.modifiers.all %}
+                <div>
+                    <h3 class="text-lg font-semibold text-stone-900 mb-3">{{ modifier.name }}</h3>
+                    <div class="flex flex-wrap gap-3">
+                        {% for option in modifier.options.all %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="modifier_{{ modifier.id }}" value="{{ option.id }}"
+                                data-mod-name="mod_{{ modifier.id }}" data-price="{{ option.price_extra|unlocalize }}"
+                                @change="updatePrice({{ modifier.id }}, '{{ option.id }}')" class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                            <div
+                                class="border border-stone-300 rounded-lg px-4 py-2 peer-checked:bg-amber-800 peer-checked:text-white peer-checked:border-amber-800 hover:border-amber-800 transition-all duration-200 flex items-center gap-2 text-amber-800">
+                                <span>{{ option.name }}</span>
+                                {% if option.price_extra > 0 %}
+                                <span class="text-sm font-medium transition-colors">+{{ option.price_extra|unlocalize }}
+                                    ₽</span>
+                                {% elif option.price_extra < 0 %} <span class="text-sm font-medium transition-colors">{{
+                                    option.price_extra|unlocalize }} ₽</span>
+                                    {% endif %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% endif %}
+
+            <!-- Итого, Количество и Кнопка -->
+            <div class="border-t border-stone-200 mt-auto pt-6 space-y-4">
+                <!-- Счетчик количества -->
+                <div class="flex items-center gap-4">
+                    <span class="text-stone-600 font-medium">Количество:</span>
+                    <div class="flex items-center border border-stone-300 rounded-lg">
+                        <button type="button" @click="decrement()"
+                            class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-l-lg">-</button>
+                        <span class="w-12 text-center border-x border-stone-300 py-2 bg-white text-stone-900"
+                            x-text="quantity" x-cloak>1</span>
+                        <button type="button" @click="increment()"
+                            class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-r-lg">+</button>
+                    </div>
+                </div>
+
+                <!-- Итого -->
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold text-stone-900">Итого:</span>
+                    <span class="text-3xl font-mono font-bold text-amber-800" x-text="getTotal()" x-cloak>{{
+                        product.price
+                        }} ₽</span>
+                </div>
+
+                <!-- Кнопка добавления -->
+                <button @click="addToCart()"
+                    class="w-full bg-amber-800 text-white py-3 rounded-full text-lg font-semibold hover:bg-amber-900 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                    <span>🛒</span> Добавить в корзину
+                </button>
+            </div>
         </div>
     </div>
+    <!-- Конец вашего оригинального кода карточки -->
 
-    <!-- Инфо -->
-    <div class="w-full md:w-1/2 flex flex-col">
-        <h1 class="text-3xl font-bold text-stone-900">{{ product.name }}</h1>
-
-        <div class="text-stone-600 mt-4 leading-relaxed">
-            {{ product.description|linebreaks }}
-        </div>
-
-        <div class="border-t border-stone-200 my-6"></div>
-
-        <!-- Модификаторы -->
-        {% if product.modifiers.all %}
-        <div class="space-y-6 mb-6">
-            {% for modifier in product.modifiers.all %}
-            <div>
-                <h3 class="text-lg font-semibold text-stone-900 mb-3">{{ modifier.name }}</h3>
-                <div class="flex flex-wrap gap-3">
-                    {% for option in modifier.options.all %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="modifier_{{ modifier.id }}" value="{{ option.id }}"
-                            data-mod-name="mod_{{ modifier.id }}" data-price="{{ option.price_extra|unlocalize }}"
-                            @change="updatePrice({{ modifier.id }}, '{{ option.id }}')" class="peer sr-only" {% if forloop.first %}checked{% endif %}>
-                        <div
-                            class="border border-stone-300 rounded-lg px-4 py-2 peer-checked:bg-amber-800 peer-checked:text-white peer-checked:border-amber-800 hover:border-amber-800 transition-all duration-200 flex items-center gap-2 text-amber-800">
-                            <span>{{ option.name }}</span>
-                            {% if option.price_extra > 0 %}
-                            <span class="text-sm font-medium transition-colors">+{{ option.price_extra|unlocalize }}
-                                ₽</span>
-                            {% elif option.price_extra < 0 %} <span class="text-sm font-medium transition-colors">{{
-                                option.price_extra|unlocalize }} ₽</span>
-                                {% endif %}
-                        </div>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Итого, Количество и Кнопка -->
-        <div class="border-t border-stone-200 mt-auto pt-6 space-y-4">
-            <!-- Счетчик количества -->
-            <div class="flex items-center gap-4">
-                <span class="text-stone-600 font-medium">Количество:</span>
-                <div class="flex items-center border border-stone-300 rounded-lg">
-                    <button type="button" @click="decrement()"
-                        class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-l-lg">-</button>
-                    <span class="w-12 text-center border-x border-stone-300 py-2 bg-white text-stone-900"
-                        x-text="quantity" x-cloak>1</span>
-                    <button type="button" @click="increment()"
-                        class="px-3 py-2 hover:bg-stone-100 text-stone-600 transition-colors rounded-r-lg">+</button>
-                </div>
-            </div>
-
-            <!-- Итого -->
-            <div class="flex justify-between items-center">
-                <span class="text-lg font-semibold text-stone-900">Итого:</span>
-                <span class="text-3xl font-mono font-bold text-amber-800" x-text="getTotal()" x-cloak>{{ product.price
-                    }} ₽</span>
-            </div>
-
-            <!-- Кнопка добавления -->
-            <button @click="addToCart()"
-                class="w-full bg-amber-800 text-white py-3 rounded-full text-lg font-semibold hover:bg-amber-900 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                <span>🛒</span> Добавить в корзину
-            </button>
-        </div>
-    </div>
 </div>
 
 <!-- Скрытый инпут для CSRF -->

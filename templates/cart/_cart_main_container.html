@@ -25,7 +25,7 @@
                     <p class="text-4xl font-mono font-bold text-amber-800">{{ cart.get_total_price }} ₽</p>
                 </div>
 
-                <a href="#"
+                <a href="{% url 'orders:checkout' %}"
                     class="block w-full text-center bg-amber-800 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-amber-900 transition-colors shadow-md">
                     Оформить заказ
                 </a>
