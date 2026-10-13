@@ -12,8 +12,7 @@
             <!-- Левая колонка: Форма -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-2xl shadow-sm p-6">
-                    <form method="post" x-data="{ delivery: '{{ form.delivery_type.value|default:" pickup" }}' }"
-                        novalidate>
+                    <form method="post" id="checkout-form" x-data="{ deliveryType: null }" novalidate>
                         {% csrf_token %}
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -63,12 +62,14 @@
                             <label class="block text-sm font-medium text-stone-900 mb-2">Тип получения</label>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="delivery_type" value="pickup" x-model="delivery"
+                                    <input type="radio" name="delivery_type" value="pickup"
+                                        @click="deliveryType = 'pickup'"
                                         class="w-4 h-4 text-amber-800 border-stone-300 focus:ring-amber-800">
                                     <span class="text-stone-900">Самовывоз</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="delivery_type" value="delivery" x-model="delivery"
+                                    <input type="radio" name="delivery_type" value="delivery"
+                                        @click="deliveryType = 'delivery'"
                                         class="w-4 h-4 text-amber-800 border-stone-300 focus:ring-amber-800">
                                     <span class="text-stone-900">Доставка</span>
                                 </label>
@@ -79,7 +80,7 @@
                         </div>
 
                         <!-- Время самовывоза -->
-                        <div class="mt-5" x-show="delivery === 'pickup'" x-cloak>
+                        <div class="mt-5" x-show="deliveryType === 'pickup'">
                             <label for="{{ form.pickup_time.id_for_label }}"
                                 class="block text-sm font-medium text-stone-900 mb-1">Время самовывоза</label>
                             {{ form.pickup_time }}
@@ -89,7 +90,7 @@
                         </div>
 
                         <!-- Адрес доставки -->
-                        <div class="mt-5" x-show="delivery === 'delivery'" x-cloak>
+                        <div class="mt-5" x-show="deliveryType === 'delivery'">
                             <label for="{{ form.address.id_for_label }}"
                                 class="block text-sm font-medium text-stone-900 mb-1">Адрес доставки</label>
                             {{ form.address }}

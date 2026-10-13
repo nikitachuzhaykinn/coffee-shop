@@ -33,7 +33,6 @@
             display: none !important;
         }
 
-        /* Гарантированное отключение горизонтального скролла */
         html,
         body {
             overflow-x: hidden;
@@ -69,10 +68,20 @@
                     <span class="text-2xl">🛒</span>
                     {% include "cart/_cart_count.html" %}
                 </a>
-                <a href="#"
+
+                <!-- ИЗМЕНЕНИЕ ЗДЕСЬ: показываем Имя, а если его нет — username -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'users:profile' %}"
+                    class="bg-amber-800 text-white px-4 py-2 rounded-full hover:bg-amber-900 transition-colors text-sm font-medium">
+                    {{ user.first_name|default:user.username }}
+                </a>
+                {% else %}
+                <a href="{% url 'users:login' %}"
                     class="bg-amber-800 text-white px-4 py-2 rounded-full hover:bg-amber-900 transition-colors text-sm font-medium">
                     Войти
                 </a>
+                {% endif %}
+
             </div>
         </div>
     </header>
@@ -112,15 +121,11 @@
                 setTimeout(() => { notif.style.display = 'none'; }, 300);
             }, 2500);
         }
-    </script>
 
-    <script>
-        // Обновление счетчика корзины при получении события
         document.addEventListener('cart-added', function () {
             // HTMX сам обновит элемент с id="cart-count"
         });
 
-        // Глобальная функция для принудительного обновления счетчика
         function updateCartCount(count) {
             const cartCountEl = document.getElementById('cart-count');
             if (cartCountEl) {
